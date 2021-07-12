@@ -4,7 +4,7 @@ import csv
 from jira.resources import Issue
 from pathlib import Path
 from rich.prompt import Confirm
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, List
 
 from ..exceptions import UserError
 from ..types import IssueDescriptor
@@ -30,15 +30,6 @@ class Command(BaseCommand):
             type=Path,
         )
         parser.add_argument(
-            "out_path",
-            type=Path,
-            help=(
-                "Path to which an annotated CSV indicating"
-                " Jira-derived things like generated Issue IDs"
-                " will be written."
-            ),
-        )
-        parser.add_argument(
             "project", type=str, help="Jira project within which to create new issues."
         )
         parser.add_argument(
@@ -54,42 +45,45 @@ class Command(BaseCommand):
         )
 
         issues: Dict[str, Tuple[IssueDescriptor, Issue]] = {}
+        csv_records: List[Dict] = []
         with open(self.options.path, "r") as inf:
             reader = csv.DictReader(inf)
+            for row in reader:
+                csv_records.append(row)
 
-            with open(self.options.out_path, "w") as outf:
-                final_fieldnames = reader.fieldnames
-                if JIRA_ID_FIELD not in final_fieldnames:
-                    final_fieldnames.append(JIRA_ID_FIELD)
+        with open(self.options.path, "w") as outf:
+            final_fieldnames = reader.fieldnames
+            if JIRA_ID_FIELD not in final_fieldnames:
+                final_fieldnames.append(JIRA_ID_FIELD)
 
-                writer = csv.DictWriter(outf, fieldnames=final_fieldnames)
-                writer.writeheader()
+            writer = csv.DictWriter(outf, fieldnames=final_fieldnames)
+            writer.writeheader()
 
-                for row in reader:
-                    record = issue_reader.process_row(row)
+            for row in csv_records:
+                record = issue_reader.process_row(row)
 
-                    jira_issue: Optional[Issue] = None
-                    if record.jira_id:
-                        jira_issue = self.jira.issue(record.jira_id)
-                    elif Confirm.ask(
-                        f'Create issue for [u]"{record.summary}" ({record.id})[/u]?'
-                    ):
-                        jira_issue = self.jira.create_issue(
-                            fields={
-                                "project": self.options.project,
-                                "summary": record.summary,
-                                "description": record.description,
-                                "issuetype": {
-                                    "name": self.options.issuetype,
-                                },
-                            }
-                        )
+                jira_issue: Optional[Issue] = None
+                if record.jira_id:
+                    jira_issue = self.jira.issue(record.jira_id)
+                elif Confirm.ask(
+                    f'Create issue for [u]"{record.summary}" ({record.id})[/u]?'
+                ):
+                    jira_issue = self.jira.create_issue(
+                        fields={
+                            "project": self.options.project,
+                            "summary": record.summary,
+                            "description": record.description,
+                            "issuetype": {
+                                "name": self.options.issuetype,
+                            },
+                        }
+                    )
 
-                    issues[record.id] = (record, jira_issue)
+                issues[record.id] = (record, jira_issue)
 
-                    row[JIRA_ID_FIELD] = jira_issue.key if jira_issue else ""
-                    writer.writerow(row)
-                    outf.flush()
+                row[JIRA_ID_FIELD] = jira_issue.key if jira_issue else ""
+                writer.writerow(row)
+                outf.flush()
 
         all_records = [x for (x, _) in issues.values()]
         for record, issue in issues.values():
