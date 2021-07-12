@@ -14,11 +14,11 @@ class AgileIssueDescriptor(IssueDescriptor):
 class Reader(BaseReader):
     def process_row(self, row: Dict) -> AgileIssueDescriptor:
         return AgileIssueDescriptor(
-            id=row['id'],
-            summary=row['summary'],
+            id=row["id"],
+            summary=row["summary"],
             description="\n\n---\n\n".join([row["story"], row["notes"]]),
             jira_id=row.get(JIRA_ID_FIELD),
-            dependency_ids=row["dependencies"].split(',')
+            dependency_ids=row["dependencies"].split(","),
         )
 
     def get_dependencies(self, row: AgileIssueDescriptor, rows: Iterable[AgileIssueDescriptor]) -> Iterable[AgileIssueDescriptor]:  # type: ignore[override]

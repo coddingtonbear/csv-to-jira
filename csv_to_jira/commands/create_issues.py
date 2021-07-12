@@ -36,47 +36,33 @@ class Command(BaseCommand):
                 "Path to which an annotated CSV indicating"
                 " Jira-derived things like generated Issue IDs"
                 " will be written."
-            )
+            ),
         )
         parser.add_argument(
-            "project",
-            type=str,
-            help="Jira project within which to create new issues."
+            "project", type=str, help="Jira project within which to create new issues."
         )
         parser.add_argument(
-            "--reader",
-            type=str,
-            choices=available_readers,
-            default="default"
+            "--reader", type=str, choices=available_readers, default="default"
         )
-        parser.add_argument(
-            "--issuetype",
-            type=str,
-            default="Story"
-        )
-        parser.add_argument(
-            "--relationship",
-            type=str,
-            default="Blocks"
-        )
+        parser.add_argument("--issuetype", type=str, default="Story")
+        parser.add_argument("--relationship", type=str, default="Blocks")
 
     def handle(self):
         available_readers = get_installed_readers()
-        issue_reader: BaseReader = available_readers[self.options.reader](self.config, self.options)
+        issue_reader: BaseReader = available_readers[self.options.reader](
+            self.config, self.options
+        )
 
         issues: Dict[str, Tuple[IssueDescriptor, Issue]] = {}
-        with open(self.options.path, 'r') as inf:
+        with open(self.options.path, "r") as inf:
             reader = csv.DictReader(inf)
 
-            with open(self.options.out_path, 'w') as outf:
+            with open(self.options.out_path, "w") as outf:
                 final_fieldnames = reader.fieldnames
                 if JIRA_ID_FIELD not in final_fieldnames:
                     final_fieldnames.append(JIRA_ID_FIELD)
 
-                writer = csv.DictWriter(
-                    outf,
-                    fieldnames=final_fieldnames
-                )
+                writer = csv.DictWriter(outf, fieldnames=final_fieldnames)
                 writer.writeheader()
 
                 for row in reader:
@@ -86,20 +72,22 @@ class Command(BaseCommand):
                     if record.jira_id:
                         jira_issue = self.jira.issue(record.jira_id)
                     elif Confirm.ask(
-                        f"Create issue for [u]\"{record.summary}\" ({record.id})[/u]?"
+                        f'Create issue for [u]"{record.summary}" ({record.id})[/u]?'
                     ):
-                        jira_issue = self.jira.create_issue(fields={
-                            "project": self.options.project,
-                            "summary": record.summary,
-                            "description": record.description,
-                            "issuetype": {
-                                "name": self.options.issuetype,
-                            },
-                        })
+                        jira_issue = self.jira.create_issue(
+                            fields={
+                                "project": self.options.project,
+                                "summary": record.summary,
+                                "description": record.description,
+                                "issuetype": {
+                                    "name": self.options.issuetype,
+                                },
+                            }
+                        )
 
                     issues[record.id] = (record, jira_issue)
 
-                    row[JIRA_ID_FIELD] = jira_issue.key if jira_issue else ''
+                    row[JIRA_ID_FIELD] = jira_issue.key if jira_issue else ""
                     writer.writerow(row)
                     outf.flush()
 
@@ -122,12 +110,12 @@ class Command(BaseCommand):
                 if not found_link:
                     if Confirm.ask(
                         "Create relationship"
-                        f" [u]\"{jira_dep.fields.summary}\" ({dep.id})[/u]"
+                        f' [u]"{jira_dep.fields.summary}" ({dep.id})[/u]'
                         f" [b]{self.options.relationship}[/b]"
-                        f" [u]\"{issue.fields.summary}\" ({record.id})[/u]?"
+                        f' [u]"{issue.fields.summary}" ({record.id})[/u]?'
                     ):
                         self.jira.create_issue_link(
                             type=self.options.relationship,
                             inwardIssue=jira_dep.key,
-                            outwardIssue=issue.key
+                            outwardIssue=issue.key,
                         )

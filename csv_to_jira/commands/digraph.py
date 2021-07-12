@@ -26,17 +26,16 @@ class Command(BaseCommand):
             type=Path,
         )
         parser.add_argument(
-            "--reader",
-            type=str,
-            choices=available_readers,
-            default="default"
+            "--reader", type=str, choices=available_readers, default="default"
         )
 
     def handle(self):
         available_readers = get_installed_readers()
-        issue_reader: BaseReader = available_readers[self.options.reader](self.config, self.options)
+        issue_reader: BaseReader = available_readers[self.options.reader](
+            self.config, self.options
+        )
 
-        with open(self.options.path, 'r') as inf:
+        with open(self.options.path, "r") as inf:
             reader = csv.DictReader(inf)
 
             issues: List[IssueDescriptor] = []
@@ -45,22 +44,16 @@ class Command(BaseCommand):
                 issues.append(record)
 
         with open(self.options.out_path, "w") as outf:
-            lines = [
-                "digraph issues {"
-            ]
+            lines = ["digraph issues {"]
 
             for issue in issues:
-                wrapped = '<BR/>'.join(textwrap.wrap(issue.summary, 20))
-                lines.append(
-                    f"\tid{issue.id}[label=<<B>{issue.id}</B><BR/>{wrapped}>]"
-                )
+                wrapped = "<BR/>".join(textwrap.wrap(issue.summary, 20))
+                lines.append(f"\tid{issue.id}[label=<<B>{issue.id}</B><BR/>{wrapped}>]")
 
             for issue in issues:
                 dependencies = issue_reader.get_dependencies(issue, issues)
                 for dep in dependencies:
-                    lines.append(
-                        f"\tid{dep.id} -> id{issue.id} [arrowhead=none]"
-                    )
+                    lines.append(f"\tid{dep.id} -> id{issue.id} [arrowhead=none]")
 
             lines.append("}")
 
