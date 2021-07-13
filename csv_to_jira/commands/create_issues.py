@@ -1,10 +1,12 @@
 import argparse
 import csv
+import os
+import shutil
 
 from jira.resources import Issue
 from pathlib import Path
 from rich.prompt import Confirm
-from typing import Tuple, Dict, Optional, List
+from typing import cast, Tuple, Dict, Optional, List, Any
 
 from ..exceptions import UserError
 from ..types import IssueDescriptor
@@ -14,6 +16,10 @@ from ..plugin import BaseCommand, BaseReader, get_installed_readers
 
 class InvalidIssueType(UserError):
     pass
+
+
+def field_and_value(arg: str) -> Tuple[str, str]:
+    return cast(Tuple[str, str], tuple(arg.split('=', 1)))
 
 
 class Command(BaseCommand):
@@ -35,6 +41,12 @@ class Command(BaseCommand):
         parser.add_argument(
             "--reader", type=str, choices=available_readers, default="default"
         )
+        parser.add_argument(
+            "--setfield", type=field_and_value, nargs="*", default=[]
+        )
+        parser.add_argument(
+            "--label", type=str, nargs="*", default=[]
+        )
         parser.add_argument("--issuetype", type=str, default="Story")
         parser.add_argument("--relationship", type=str, default="Blocks")
 
@@ -51,7 +63,11 @@ class Command(BaseCommand):
             for row in reader:
                 csv_records.append(row)
 
-        with open(self.options.path, "w") as outf:
+        temporary_path = (
+            Path(os.path.dirname(self.options.path))
+            / Path(os.path.basename(self.options.path) + '.tmp')
+        )
+        with open(temporary_path, "w") as outf:
             final_fieldnames = reader.fieldnames
             if JIRA_ID_FIELD not in final_fieldnames:
                 final_fieldnames.append(JIRA_ID_FIELD)
@@ -68,22 +84,27 @@ class Command(BaseCommand):
                 elif Confirm.ask(
                     f'Create issue for [u]"{record.summary}" ({record.id})[/u]?'
                 ):
-                    jira_issue = self.jira.create_issue(
-                        fields={
-                            "project": self.options.project,
-                            "summary": record.summary,
-                            "description": record.description,
-                            "issuetype": {
-                                "name": self.options.issuetype,
-                            },
+                    fields: Dict[str, Any] = {
+                        "project": self.options.project,
+                        "summary": record.summary,
+                        "description": record.description,
+                        "issuetype": {
+                            "name": self.options.issuetype,
                         }
-                    )
+                    }
+                    for field, value in self.options.setfield:
+                        fields[field] = value
+                    if self.options.label:
+                        fields['labels'] = self.options.label
+                    jira_issue = self.jira.create_issue(fields=fields)
 
                 issues[record.id] = (record, jira_issue)
 
                 row[JIRA_ID_FIELD] = jira_issue.key if jira_issue else ""
                 writer.writerow(row)
                 outf.flush()
+
+        shutil.move(temporary_path, self.options.path)
 
         all_records = [x for (x, _) in issues.values()]
         for record, issue in issues.values():
@@ -95,6 +116,12 @@ class Command(BaseCommand):
 
                 found_link = False
                 for link in jira_dep.fields.issuelinks:
+                    # If there's no 'outwardIssue' field, we're looking
+                    # at the relationship from the other side; so we
+                    # can just skip these.
+                    if not hasattr(link, 'outwardIssue'):
+                        continue
+
                     if (
                         link.type.name == self.options.relationship
                         and link.outwardIssue.key == issue.key
