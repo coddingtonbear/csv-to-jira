@@ -53,7 +53,7 @@ class Command(BaseCommand):
             for issue in issues:
                 dependencies = issue_reader.get_dependencies(issue, issues)
                 for dep in dependencies:
-                    lines.append(f"\tid{dep.id} -> id{issue.id} [arrowhead=none]")
+                    lines.append(f"\tid{dep.id} -> id{issue.id} [arrowhead=normal]")
 
             lines.append("}")
 
