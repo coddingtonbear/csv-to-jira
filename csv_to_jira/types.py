@@ -10,6 +10,7 @@ Id = str
 class IssueDescriptor:
     id: Id
     summary: str
+    size: Optional[float]
     description: str
     jira_id: Optional[str]
 

@@ -16,6 +16,7 @@ class Reader(BaseReader):
         return AgileIssueDescriptor(
             id=row["id"],
             summary=row["summary"],
+            size=float(row["size"]),
             description="\n\n---\n\n".join([row["story"], row["notes"]]),
             jira_id=row.get(JIRA_ID_FIELD),
             dependency_ids=row["dependencies"].split(","),

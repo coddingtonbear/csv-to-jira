@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
             for issue in issues:
                 wrapped = "<BR/>".join(textwrap.wrap(issue.summary, 20))
-                lines.append(f"\tid{issue.id}[label=<<B>{issue.id}</B><BR/>{wrapped}>]")
+                lines.append(f"\tid{issue.id}[shape=box,label=<<B>{issue.id}</B><BR/>{wrapped}<BR/>{issue.size} pts>,height={issue.size * 1.25}]")
 
             for issue in issues:
                 dependencies = issue_reader.get_dependencies(issue, issues)
