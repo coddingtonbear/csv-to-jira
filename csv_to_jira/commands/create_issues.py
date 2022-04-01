@@ -108,12 +108,8 @@ class Command(BaseCommand):
 
         all_records = [x for (x, _) in issues.values()]
         for record, issue in issues.values():
-            dependencies = issue_reader.get_dependencies(record, all_records)
-            for dep in dependencies:
-                jira_dep = issues[dep.id][1]
-                if not jira_dep:
-                    continue
-
+            dependencies = issue_reader.get_dependencies(self.jira, record, all_records)
+            for jira_dep in dependencies:
                 found_link = False
                 for link in jira_dep.fields.issuelinks:
                     # If there's no 'outwardIssue' field, we're looking
@@ -131,7 +127,7 @@ class Command(BaseCommand):
                 if not found_link:
                     if Confirm.ask(
                         "Create relationship"
-                        f' [u]"{jira_dep.fields.summary}" ({dep.id})[/u]'
+                        f' [u]"{jira_dep.fields.summary}" ({jira_dep.key})[/u]'
                         f" [b]{self.options.relationship}[/b]"
                         f' [u]"{issue.fields.summary}" ({record.id})[/u]?'
                     ):

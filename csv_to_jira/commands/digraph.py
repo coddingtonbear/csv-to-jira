@@ -51,9 +51,13 @@ class Command(BaseCommand):
                 lines.append(f"\tid{issue.id}[shape=box,label=<<B>{issue.id}</B><BR/>{wrapped}<BR/>{issue.size} pts>,height={issue.size * 1.25}]")
 
             for issue in issues:
-                dependencies = issue_reader.get_dependencies(issue, issues)
-                for dep in dependencies:
-                    lines.append(f"\tid{dep.id} -> id{issue.id} [arrowhead=normal]")
+                dep_names = issue_reader.get_dependency_names(issue)
+                for dep in dep_names:
+                    dep_name: str = f"id{dep}"
+                    if '-' in dep:
+                        dep_name = f"\"{dep}\""
+
+                    lines.append(f"\t{dep_name} -> id{issue.id} [arrowhead=normal]")
 
             lines.append("}")
 

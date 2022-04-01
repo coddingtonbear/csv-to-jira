@@ -6,6 +6,17 @@ from dataclasses import dataclass
 Id = str
 
 
+class IssueCsvRow(TypedDict, total=False):
+    id: str
+    summary: str
+    size: Optional[float]
+    description: Optional[str]
+    story: Optional[str]
+    notes: Optional[str]
+    dependencies: Optional[str]
+    __jira_id__: str
+
+
 @dataclass
 class IssueDescriptor:
     id: Id

@@ -6,6 +6,7 @@ import logging
 from typing import (
     Dict,
     Iterable,
+    Tuple,
     Optional,
     Type,
     cast,
@@ -14,13 +15,13 @@ from typing import (
 import pkg_resources
 
 import keyring
-from jira import JIRA
+from jira import JIRA, Issue
 from rich.console import Console
 from urllib3 import disable_warnings
 
 from .constants import APP_NAME
 from .exceptions import ConfigurationError
-from .types import ConfigDict, InstanceDefinition, IssueDescriptor
+from .types import ConfigDict, InstanceDefinition, IssueCsvRow, IssueDescriptor
 from . import config
 
 
@@ -185,10 +186,15 @@ class BaseReader(metaclass=ABCMeta):
         return self._options
 
     @abstractmethod
-    def process_row(self, row: Dict) -> IssueDescriptor:
+    def process_row(self, row: IssueCsvRow) -> IssueDescriptor:
         ...
 
+    def get_dependency_names(
+        self, row: IssueDescriptor
+    ) -> Iterable[str]:
+        return []
+
     def get_dependencies(
-        self, row: IssueDescriptor, rows: Iterable[IssueDescriptor]
-    ) -> Iterable[IssueDescriptor]:
+        self, jira: JIRA, row: IssueDescriptor, rows: Dict[str, Tuple[IssueDescriptor, Issue]]
+    ) -> Iterable[Issue]:
         return []
