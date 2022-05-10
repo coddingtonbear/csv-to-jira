@@ -77,7 +77,6 @@ class Command(BaseCommand):
 
             for row in csv_records:
                 record = issue_reader.process_row(row)
-
                 jira_issue: Optional[Issue] = None
                 if record.jira_id:
                     jira_issue = self.jira.issue(record.jira_id)
