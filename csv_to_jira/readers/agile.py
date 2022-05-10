@@ -36,6 +36,8 @@ class Reader(BaseReader):
             description="\n\n---\n\n".join(description_fields),
             jira_id=cast(Optional[str], row.get(JIRA_ID_FIELD)),
             dependency_ids=[x for x in (row.get("dependencies") or "").split(",") if x],
+            labels=[x.strip() for x in row['labels'].split(' ') if x.strip()] if row.get('labels') else [],
+            issuetype=row.get('issuetype')
         )
 
     def get_dependency_names(self, row: AgileIssueDescriptor) -> Iterable[str]:  # type: ignore[override]

@@ -1,4 +1,4 @@
-from typing import TypedDict, Dict, Union, Optional
+from typing import TypedDict, Dict, Union, Optional, List
 
 from dataclasses import dataclass
 
@@ -23,6 +23,8 @@ class IssueDescriptor:
     summary: str
     size: Optional[float]
     description: str
+    labels: List[str]
+    issuetype: Optional[str]
     jira_id: Optional[str]
 
 

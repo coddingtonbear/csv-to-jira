@@ -88,14 +88,17 @@ class Command(BaseCommand):
                         "project": self.options.project,
                         "summary": record.summary,
                         "description": record.description,
-                        "issuetype": {
-                            "name": self.options.issuetype,
-                        }
+                        "labels": self.options.label + record.labels
                     }
+                    if record.issuetype:
+                        fields['issuetype'] = record.issuetype
+                    elif self.options.issuetype:
+                        fields['issuetype'] = {
+                            "name": self.options.issuetype
+                        }
                     for field, value in self.options.setfield:
                         fields[field] = value
-                    if self.options.label:
-                        fields['labels'] = self.options.label
+
                     jira_issue = self.jira.create_issue(fields=fields)
 
                 issues[record.id] = (record, jira_issue)

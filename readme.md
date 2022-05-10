@@ -13,7 +13,9 @@ Create a CSV file having the following columns:
 - Description-related fields; these will be joined into a single description field in Jira:
   - `description`: A description for your issue.
   - `story`: A user story for your issue.
-  - `notes`: Some notes for your issue
+  - `notes`: Some notes for your issue.
+- `labels`: A space-separated list of labels to add to your issue.  Will be combined with `--label` options provided at the command-line.
+- `issuetype`: The name of the type of issue to create.  If undefined, will fallback to use `--issuetype` command-line argument; if that, too, is not provided, Jira will use its default.
 - `dependencies`: A comma-separated list of dependencies for this issue.  This can be either an ID as specified in another row's `id` field or a Jira ticket number.
 
 Run the following command, replacing MYPROJECT with the short name of the Jira project you would like these issues created within:
