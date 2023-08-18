@@ -1,4 +1,4 @@
 jira==3.0.1
 rich==10.5.0
 appdirs==1.4.4
-pyyaml==5.4.1
+pyyaml>=6.0.0,<7.0
