@@ -1,4 +1,5 @@
-jira==3.0.1
+jira>=3.8.0,<4
 rich==10.5.0
 appdirs==1.4.4
 pyyaml>=6.0.0,<7.0
+IPython>=8.23,<9

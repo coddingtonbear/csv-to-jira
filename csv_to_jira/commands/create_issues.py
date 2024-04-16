@@ -19,7 +19,7 @@ class InvalidIssueType(UserError):
 
 
 def field_and_value(arg: str) -> Tuple[str, str]:
-    return cast(Tuple[str, str], tuple(arg.split('=', 1)))
+    return cast(Tuple[str, str], tuple(arg.split("=", 1)))
 
 
 class Command(BaseCommand):
@@ -41,14 +41,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--reader", type=str, choices=available_readers, default="default"
         )
+        parser.add_argument("--setfield", type=field_and_value, nargs="*", default=[])
+        parser.add_argument("--label", type=str, nargs="*", default=[])
         parser.add_argument(
-            "--setfield", type=field_and_value, nargs="*", default=[]
-        )
-        parser.add_argument(
-            "--label", type=str, nargs="*", default=[]
-        )
-        parser.add_argument(
-            "--no-issues", default=True, dest="update_or_create_issues", action="store_false",
+            "--no-issues",
+            default=True,
+            dest="update_or_create_issues",
+            action="store_false",
         )
         parser.add_argument("--issuetype", type=str, default="Story")
         parser.add_argument("--relationship", type=str, default="Blocks")
@@ -66,9 +65,8 @@ class Command(BaseCommand):
             for row in reader:
                 csv_records.append(row)
 
-        temporary_path = (
-            Path(os.path.dirname(self.options.path))
-            / Path(os.path.basename(self.options.path) + '.tmp')
+        temporary_path = Path(os.path.dirname(self.options.path)) / Path(
+            os.path.basename(self.options.path) + ".tmp"
         )
         skip_all = False
         with open(temporary_path, "w") as outf:
@@ -86,16 +84,14 @@ class Command(BaseCommand):
                     "project": self.options.project,
                     "summary": record.summary,
                     "description": record.description,
-                    "labels": self.options.label + record.labels
+                    "labels": self.options.label + record.labels,
                 }
                 if record.issuetype:
-                    fields['issuetype'] = record.issuetype
+                    fields["issuetype"] = record.issuetype
                 elif self.options.issuetype:
-                    fields['issuetype'] = {
-                        "name": self.options.issuetype
-                    }
+                    fields["issuetype"] = {"name": self.options.issuetype}
                 if record.size:
-                    fields['customfield_10069'] = record.size
+                    fields["customfield_10069"] = record.size
 
                 for field, value in self.options.setfield:
                     fields[field] = value
@@ -135,7 +131,7 @@ class Command(BaseCommand):
                     # If there's no 'outwardIssue' field, we're looking
                     # at the relationship from the other side; so we
                     # can just skip these.
-                    if not hasattr(link, 'outwardIssue'):
+                    if not hasattr(link, "outwardIssue"):
                         continue
 
                     if (
